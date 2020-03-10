@@ -42,7 +42,7 @@ gulp.task('js', function () {
         .pipe(sourcemaps.init())
         //.pipe(obfuscate())
         .pipe(babel({
-            presets: ['@babel/env','@babel/transform-runtime']
+            presets: ['@babel/env','@babel/preset-transform-runtime']
         }))
         .pipe(terser())
         .pipe(sourcemaps.write())

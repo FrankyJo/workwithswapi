@@ -1,5 +1,4 @@
 `use stirct`;
-require("babel-core/register");
 
 const url = "https://swapi.co/api/people"
 
@@ -9,4 +8,4 @@ async function sendRequest(method,url,body = null) {
     console.log(JSON.stringify(swapiJson))
 }
 
-sendRequest(url);
+sendRequest(url).then(() => console.log('ok'));
