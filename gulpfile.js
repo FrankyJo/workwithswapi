@@ -26,7 +26,7 @@ const paths = {
 gulp.task('sass', function () {
     return gulp.src(paths.css)
         .pipe(sourcemaps.init())
-        .pipe(shorthand())
+        // .pipe(shorthand())
         .pipe(sass().on('error', sass.logError))
         .pipe(mmq())
         .pipe(minifyCss())
@@ -42,7 +42,7 @@ gulp.task('js', function () {
         .pipe(sourcemaps.init())
         //.pipe(obfuscate())
         .pipe(babel({
-            presets: ['@babel/env']
+            presets: ['@babel/env','@babel/transform-runtime']
         }))
         .pipe(terser())
         .pipe(sourcemaps.write())

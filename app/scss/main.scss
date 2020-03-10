@@ -1,0 +1,11 @@
+nav {
+  ul {
+    display: flex;
+    flex-direction: row;
+    li {
+      cursor: pointer;
+      padding: 20px 100px;
+      list-style: none;
+    }
+  }
+}
