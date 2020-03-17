@@ -1,11 +1,28 @@
-`use stirct`;
 
-const url = "https://swapi.co/api/people"
 
-async function sendRequest(method,url,body = null) {
-    const response = await fetch(url)
-    const swapiJson = await response.json();
-    console.log(JSON.stringify(swapiJson))
+function connectionAPI(url){
+      return fetch(url)
+        .then(response =>  response.json())
+        .then((data) => {
+           return data
+        })
 }
 
-sendRequest(url).then(() => console.log('ok'));
+
+function  createListPeople(){
+    const url = "https://swapi.co/api/people/"
+
+    let listPeopleContainer = document.createElement('ul')
+    let listPeople = document.createElement('li')
+    let people = document.querySelector('.people');
+
+    let peopleJSON =  connectionAPI(url);
+
+    listPeopleContainer.setAttribute('class','people__container');
+    listPeopleContainer.appendChild(listPeople);
+    people.appendChild(listPeopleContainer);
+
+    console.log(peopleJSON)
+}
+createListPeople();
+

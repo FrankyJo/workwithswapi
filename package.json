@@ -54,5 +54,7 @@
     "@babel/runtime": "^7.8.7",
     "gulp-shorthand": "^1.1.0"
   },
-  "plugins": ["@babel/plugin-transform-regenerator"]
+  "plugins": [
+    "@babel/plugin-transform-regenerator"
+  ]
 }
