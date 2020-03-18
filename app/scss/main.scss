@@ -9,3 +9,8 @@ nav {
     }
   }
 }
+.people{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
