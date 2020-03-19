@@ -1,14 +1,16 @@
 const menuPeople = document.querySelector('.for_people');
 const menuFilm = document.querySelector('.for_films');
 const containerItems = document.querySelector('.container__items');
-const singlePeople = document.querySelector('.people_info');
+const singleItems = document.querySelector('.info__items');
 
 
 //Connection
 function connectionAPI(url) {
+    createPreloader()
     return fetch(url)
         .then(response => response.json())
         .then((data) => {
+            removePreloader()
             return data
         })
 }
@@ -25,11 +27,49 @@ function createElement (elemt, classElement ){
 function removeElement (elem){
     document.querySelector(elem).remove();
 }
+//function preloader
+function createPreloader(){
+    const prelodaer = document.createElement('div');
+    const imgPreloader = document.createElement('img')
+    prelodaer.setAttribute('class', 'preloader');
+    imgPreloader.setAttribute('src','https://i.gifer.com/AvGf.gif');
+    prelodaer.appendChild(imgPreloader);
+    document.querySelector('.container').appendChild(prelodaer)
+}
+
+//removePreloader
+function removePreloader(){
+    document.querySelector('.preloader').remove();
+}
+
+//showItemInfo
+function showItemInfo(func){
+    containerItems.addEventListener('click', function (e) {
+        const target = e.target;
+        const url = target.getAttribute('data-item');
+        console.log(url);
+        const singleItems = connectionAPI(url);
+
+        singleItems.then(data => func(data,target))
+    })
+}
+
 
 menuPeople.addEventListener('click', function () {
     const url = "https://swapi.co/api/people/"
     const peopleJSON = connectionAPI(url);
     peopleJSON.then(data => createListPeople(data))
+
+
+    if(containerItems.querySelector('.list-people') != null ||
+        singleItems.querySelector('.people__info-container') != null){
+        removeElement('.list-people');
+        removeElement('.people__info-container');
+        removeElement('.foto-people');
+
+    } else if(containerItems.querySelector('.film_container') != null){
+        removeElement('.film_container');
+    }
 })
 
 function createListPeople(data) {
@@ -39,56 +79,49 @@ function createListPeople(data) {
 
     data.results.map(function (item) {
             let listPeople = createElement('li')
-            listPeople.setAttribute('data-people', item['url'])
+            listPeople.setAttribute('data-item', item['url'])
             listPeople.setAttribute('data-id', i++)
             listPeople.textContent = item['name'];
             listPeopleContainer.appendChild(listPeople)
         }
     )
     containerItems.appendChild(listPeopleContainer);
+    showItemInfo(createSingleItemsInfo)
 }
 
 
-containerItems.addEventListener('click', function (e) {
-    const target = e.target;
-    const url = target.getAttribute('data-people');
-    const singlePeople = connectionAPI(url);
-
-    singlePeople.then(data => createSinglePeopleInfo(data,target))
 
 
-})
-
-function createSinglePeopleInfo(data,target) {
+function createSingleItemsInfo(data,target) {
     const peopleArr = data;
-    const SinglePeopleInfo = createElement('ul');
+    const singleItemsInfo = createElement('ul');
     const imgPeople = createElement('img');
 
     let index = 1;
 
-    SinglePeopleInfo.setAttribute('class', 'people__info-container');
+    singleItemsInfo.setAttribute('class', 'people__info-container');
     imgPeople.setAttribute('src', 'https://starwars-visualguide.com/assets/img/characters/'+target.getAttribute('data-id')+'.jpg');
-
+    imgPeople.setAttribute('class','foto-people');
     for(let key in peopleArr){
 
         if(index <= 8){
 
-            const SinglePeopleAttr = createElement('li')
-            SinglePeopleAttr.textContent = key + ' | ' + peopleArr[key];
+            const singleItemsAttr = createElement('li')
+            singleItemsAttr.textContent = key + ' | ' + peopleArr[key];
 
-            SinglePeopleInfo.appendChild(SinglePeopleAttr);
+            singleItemsInfo.appendChild(singleItemsAttr);
         }
         index++
     }
 
-    if(singlePeople.querySelector('.people__info-container') != null){
+    if(singleItems.querySelector('.people__info-container') != null){
         removeElement('.people__info-container');
         removeElement('.foto-people');
-        singlePeople.appendChild(imgPeople);
-        singlePeople.appendChild(SinglePeopleInfo);
+        singleItems.appendChild(imgPeople);
+        singleItems.appendChild(singleItemsInfo);
     } else {
-        singlePeople.appendChild(imgPeople);
-        singlePeople.appendChild(SinglePeopleInfo);
+        singleItems.appendChild(imgPeople);
+        singleItems.appendChild(singleItemsInfo);
     }
 
 }
@@ -98,10 +131,10 @@ menuFilm.addEventListener('click',function(){
     const url = "https://swapi.co/api/films/"
     const filmsJSON = connectionAPI(url);
     filmsJSON.then(data => createListFilms(data))
-    console.log(containerItems.querySelector('.list-people'))
+
 
     if(containerItems.querySelector('.list-people') != null ||
-        singlePeople.querySelector('.people__info-container') != null){
+        singleItems.querySelector('.people__info-container') != null){
         removeElement('.list-people');
         removeElement('.people__info-container');
         removeElement('.foto-people');
@@ -110,6 +143,7 @@ menuFilm.addEventListener('click',function(){
         removeElement('.list-people');
     }
 
+
 })
 
 
@@ -117,16 +151,59 @@ function createListFilms(data) {
     let i = 0;
     const filmArr = data.results
     const listFilm = createElement('ul');
-    const imgFilm = createElement('img');
+    listFilm.setAttribute('class','film_container');
 
     filmArr.map(function (item) {
         console.log(item);
         let singleFilm = createElement('li')
-        singleFilm.setAttribute('data-film', item['url'])
+        let imageFilm = createElement('img')
+        let titleFilm = createElement('h2')
+        let descriptionFilm = createElement('p')
+
+        singleFilm.setAttribute('data-item', item['url'])
         singleFilm.setAttribute('data-id', i++)
-        singleFilm.textContent = item['title'];
+
+        imageFilm.setAttribute('src','https://starwars-visualguide.com/assets/img/films/'+i+'.jpg')
+        titleFilm.textContent = item['title']
+        descriptionFilm.textContent = item['opening_crawl'].substr(0,50) + '...'
+
+        singleFilm.appendChild(titleFilm)
+        singleFilm.appendChild(imageFilm)
+        singleFilm.appendChild(descriptionFilm)
         listFilm.appendChild(singleFilm)
         }
     )
     containerItems.appendChild(listFilm)
+    //showItemInfo(createSingleFilm)
 }
+
+
+// function createSingleFilm(data) {
+//     const filmArr = data;
+//     const SingleFilmInfo = createElement('ul');
+//
+//     let index = 1;
+//
+//     SingleFilmInfo.setAttribute('class', 'film__info-container');
+//     for(let key in filmArr){
+//
+//         if(index <= 8){
+//
+//             const SingleFilmAttr = createElement('li')
+//             SingleFilmAttr.textContent = key + ' | ' + filmArr[key];
+//
+//             SingleFilmInfo.appendChild(SingleFilmAttr);
+//         }
+//         index++
+//     }
+//
+//     if(singleItems.querySelector('.film__info-container') != null){
+//         removeElement('.film__info-container');
+//         removeElement('.foto-film');
+//         singleItems.appendChild(imgPeople);
+//         singleItems.appendChild(singleItemsInfo);
+//     } else {
+//         singleItems.appendChild(imgPeople);
+//         singleItems.appendChild(singleItemsInfo);
+//     }
+// }
