@@ -1,54 +1,53 @@
 const colorTheme = document.querySelector('.colorTheme');
 
-colorTheme.addEventListener('click', function () {
-    if( document.body.classList.contains('blackTheme')){
-    document.body.classList.remove('blackTheme')
-    } else{
-        document.body.classList.add('blackTheme')
-    }
-
-})
-
 const popUp = document.querySelector('.popUp');
 const popUpContent = document.querySelector('.popUpContent');
-
 const saveName = document.querySelector('.sendName');
-
-saveName.addEventListener('click',function(){
-    let nameUser = document.querySelector('.namePopUp')
-
-    if(nameUser){
-        document.cookie = "user="+nameUser.value;
-    }
-    popUp.style.display = "none";
-})
-
-//получаем куки
-function getCookie(name) {
-    var matches = document.cookie.match(new RegExp(
-        "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
-    ))
-    return matches ? decodeURIComponent(matches[1]) : undefined
-}
-
-
-
-document.addEventListener('DOMContentLoaded', function () {
-
-    if(getCookie('user')){
-        popUpContent.innerHTML = '<p>Привет '+getCookie('user')+'</p>';
-        popUp.style.display = "block";
-        saveName.textContent = "Далее";
-    } else{
-        popUp.style.display = "block";
-    }
-})
 
 
 const menuPeople = document.querySelector('.for_people');
 const menuFilm = document.querySelector('.for_films');
 const containerItems = document.querySelector('.container__items');
 const singleItems = document.querySelector('.info__items');
+
+
+//запускааем попап
+document.addEventListener('DOMContentLoaded', function () {
+    if (getCookie('user')) {
+        popUpContent.innerHTML = '<p>Привет ' + getCookie('user') + '</p>';
+        popUp.style.display = "block";
+        saveName.textContent = "Далее";
+    } else {
+        popUp.style.display = "block";
+    }
+})
+
+//меняем цвет темы
+colorTheme.addEventListener('click', function () {
+    if (document.body.classList.contains('blackTheme')) {
+        document.body.classList.remove('blackTheme')
+    } else {
+        document.body.classList.add('blackTheme')
+    }
+
+})
+
+//сохраняем имя в куки
+saveName.addEventListener('click', function () {
+    const nameUser = document.querySelector('.namePopUp')
+    if (nameUser) {
+        document.cookie = "user=" + nameUser.value;
+    }
+    popUp.style.display = "none";
+})
+
+//получаем куки
+function getCookie(name) {
+    const matches = document.cookie.match(new RegExp(
+        "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+    ))
+    return matches ? decodeURIComponent(matches[1]) : undefined
+}
 
 
 //Connection
@@ -71,11 +70,6 @@ function createElement(elemt, classElement) {
     return newElement;
 }
 
-//remove Element
-function removeElement(elem) {
-    document.querySelector(elem).remove();
-}
-
 //function preloader
 function createPreloader() {
     const prelodaer = document.createElement('div');
@@ -91,47 +85,32 @@ function removePreloader() {
     document.querySelector('.preloader').remove();
 }
 
-//showItemInfo
-function showItemInfo(func) {
-    containerItems.addEventListener('click', function (e) {
-        const target = e.target;
-        const url = target.getAttribute('data-item');
-        if (url) {
-            console.log(url)
-            const singleItems = connectionAPI(url);
-            singleItems.then(data => func(data, target))
-        }
 
-    })
-}
-
-
+// вызов списка людей
 menuPeople.addEventListener('click', function () {
     const url = "https://swapi.co/api/people/"
     const peopleJSON = connectionAPI(url);
     peopleJSON.then(data => createListPeople(data))
 
-
-    if (containerItems.querySelector('.list-people') != null ||
-        singleItems.querySelector('.people__info-container') != null) {
-        removeElement('.list-people');
-        removeElement('.people__info-container');
-        removeElement('.foto-people');
-
-    } else if (containerItems.querySelector('.film_container') != null) {
-        removeElement('.film_container');
+    if(document.querySelector('.info__items') != null){
+        document.querySelector('.info__items').textContent = '';
     }
-    if(singleItems.querySelector('.film__info-container') != null){
-        removeElement('.film__info-container');
-        removeElement('.characters');
+    if(document.querySelector('.list-people') != null){
+        document.querySelector('.list-people').remove();
+    }
+    if(document.querySelector('.film_container') !=null){
+        document.querySelector('.film_container').remove()
     }
 })
 
+//создание списка людей
 function createListPeople(data) {
     let i = 1;
     const listPeopleContainer = createElement('ul');
     listPeopleContainer.setAttribute('class', 'list-people');
-
+    if(singleItems.classList.contains('film_wrapper')){
+        singleItems.classList.remove('film_wrapper')
+    }
     data.results.map(function (item) {
             let listPeople = createElement('li')
             listPeople.setAttribute('data-item', item['url'])
@@ -141,15 +120,20 @@ function createListPeople(data) {
         }
     )
     containerItems.appendChild(listPeopleContainer);
-    showItemInfo(createSingleItemsInfo)
+
+    listPeopleContainer.addEventListener('click',function (e) {
+        let target = e.target;
+        let singlePerson = connectionAPI(target.getAttribute('data-item'));
+        singlePerson.then(data => createSingleItemsInfo(data, target))
+    })
 }
 
-
-function createSingleItemsInfo(data, target) {
-    const peopleArr = data;
+//Cоздание инфы об одном человеке
+function createSingleItemsInfo(data,target) {
+    const peopleArr = data
     const singleItemsInfo = createElement('ul');
     const imgPeople = createElement('img');
-
+    console.log(peopleArr);
     let index = 1;
 
     singleItemsInfo.setAttribute('class', 'people__info-container');
@@ -168,8 +152,8 @@ function createSingleItemsInfo(data, target) {
     }
 
     if (singleItems.querySelector('.people__info-container') != null) {
-        removeElement('.people__info-container');
-        removeElement('.foto-people');
+        document.querySelector('.people__info-container').remove();
+        document.querySelector('.foto-people').remove();
         singleItems.appendChild(imgPeople);
         singleItems.appendChild(singleItemsInfo);
     } else {
@@ -180,34 +164,33 @@ function createSingleItemsInfo(data, target) {
 }
 
 
+
+//вызов списка фильмов
 menuFilm.addEventListener('click', function () {
     const url = "https://swapi.co/api/films/"
     const filmsJSON = connectionAPI(url);
     filmsJSON.then(data => createListFilms(data))
 
-
-    if (containerItems.querySelector('.list-people') != null ||
-        singleItems.querySelector('.people__info-container') != null) {
-        removeElement('.list-people');
-        removeElement('.people__info-container');
-        removeElement('.foto-people');
-
-    } else if (containerItems.querySelector('.list-people') != null) {
-        removeElement('.list-people');
+    if(document.querySelector('.info__items') != null){
+        document.querySelector('.info__items').textContent = '';
     }
-
-
+    if(document.querySelector('.list-people') != null){
+        document.querySelector('.list-people').remove();
+    }
+    if(document.querySelector('.film_container') !=null){
+        document.querySelector('.film_container').remove()
+    }
 })
 
-
+//создание списка фильмов
 function createListFilms(data) {
     let i = 0;
     const filmArr = data.results
     const listFilm = createElement('ul');
     listFilm.setAttribute('class', 'film_container');
+    singleItems.classList.add('film_wrapper')
 
     filmArr.map(function (item) {
-            console.log(item);
             let singleFilm = createElement('li')
             let imageFilm = createElement('img')
             let titleFilm = createElement('h2')
@@ -231,25 +214,28 @@ function createListFilms(data) {
         }
     )
     containerItems.appendChild(listFilm)
-    showItemInfo(createSingleFilm)
+
+    listFilm.addEventListener('click',function (e) {
+        let target = e.target;
+        let singlePerson = connectionAPI(target.getAttribute('data-item'));
+        singlePerson.then(data => createSingleFilm(data, target))
+    })
 }
 
-
+//Вывод инфы об одном фильме
 function createSingleFilm(data, target) {
     const filmArr = data;
-
-    target.getAttribute('data-id')
-
-    let image = createElement('img')
-    let filmInfo = createElement('ul')
-    let characters = createElement('ul')
-
-    image.setAttribute('src', 'https://starwars-visualguide.com/assets/img/films/' + target.getAttribute('data-id') + '.jpg')
-
-    console.log(filmArr);
-    let index = 1;
+    const image = createElement('img')
+    const filmInfo = createElement('ul')
+    const characters = createElement('ul')
 
     filmInfo.setAttribute('class', 'film__info-container');
+    characters.setAttribute('class', 'characters');
+    image.setAttribute('src', 'https://starwars-visualguide.com/assets/img/films/' + target.getAttribute('data-id') + '.jpg')
+
+    let index = 1;
+
+
     for (let key in filmArr) {
         if (index <= 6) {
             const SingleFilmAttr = createElement('li')
@@ -260,12 +246,13 @@ function createSingleFilm(data, target) {
         index++
     }
 
-    characters.setAttribute('class','characters');
+
     filmArr['characters'].map(function (el) {
         let singleCharacter = connectionAPI(el);
         singleCharacter.then(function (data) {
 
-            let nameCharacter = createElement('li');
+            let singleCharacter = createElement('li');
+            let nameCharacter = createElement('h2');
             let photoCharacter = createElement('img');
 
             let numCharacter = data['url']
@@ -273,17 +260,19 @@ function createSingleFilm(data, target) {
 
             photoCharacter.setAttribute('src', 'https://starwars-visualguide.com/assets/img/characters/' + numCharacter + '.jpg')
             nameCharacter.textContent = data['name']
-            characters.appendChild(photoCharacter)
-            characters.appendChild(nameCharacter)
+            singleCharacter.appendChild(photoCharacter)
+            singleCharacter.appendChild(nameCharacter)
+            characters.appendChild(singleCharacter)
         })
     })
-    if(singleItems.querySelector('.film__info-container') != null){
-        removeElement('.film__info-container');
-        removeElement('.characters');
+    if (singleItems.querySelector('.charKacters') != null) {
+        document.querySelector('.film__info-container').remove();
+        document.querySelector('.characters').remove();
         singleItems.appendChild(filmInfo);
         singleItems.appendChild(characters);
     } else {
         singleItems.appendChild(filmInfo);
         singleItems.appendChild(characters);
     }
+
 }
