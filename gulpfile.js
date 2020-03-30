@@ -1,96 +1,131 @@
-const gulp = require('gulp');
-const sass = require('gulp-sass');
-sass.compiler = require('node-sass');
-const minifyCss = require('gulp-minify-css');
-const shorthand = require('gulp-shorthand');
-const browserSync = require('browser-sync');
-const sourcemaps = require('gulp-sourcemaps');
-const autoprefixer = require('gulp-autoprefixer');
-const mmq = require('gulp-merge-media-queries');
-const terser = require('gulp-terser');
-const obfuscate  = require('gulp-obfuscate');
-const babel = require('gulp-babel');
+const autoprefixer = require('autoprefixer');
+const webpackStream = require('webpack-stream');
+const browser = require('browser-sync');
+const cssnano = require('cssnano');
+const del = require('del');
+const { src, dest, watch, parallel, series } = require('gulp');
+const html = require('gulp-htmlmin');
 const image = require('gulp-image');
+const mmq = require('gulp-merge-media-queries');
+const postcss = require('gulp-postcss');
+const sass = require('gulp-sass');
+const sourceMap = require('gulp-sourcemaps');
+const gulpif = require('gulp-if');
+// const less = require('gulp-less');
+const webp = require('gulp-webp');
+
+const webpackConfig = require('./webpack.config');
+const { path, lpName, directories, syntax } = require('./pathes');
+
+const development = !process.argv.includes('--prod');
+
+// eslint-disable-next-line no-console
+console.log('development', development);
+
+// JS TASK
+function JS() {
+  return src(path.js.src)
+    .pipe(webpackStream(webpackConfig(development, directories)))
+    .on('error',  function handleError(err)  {
+      console.log('WEBPACK ERROR', err);
+      this.emit('end');
+    })
+    .pipe(gulpif(development, dest(path.js.dev), dest(path.js.public)))
+}
 
 
-const reload = browserSync.reload;
+//  CSS TASK
 
-const paths = {
-    html:['app/index.html'],
-    css:['app/scss/**/*.scss'],
-    js:['app/js/**/*.js'],
-    images:['app/images/**/*']
-};
+function CSS() {
+  const preprocessors = {
+    sass: sass().on('error', sass.logError),
+    scss: sass().on('error', sass.logError)
+    // less: less()
+  };
 
+  return src(path.css.src)
+    .pipe(gulpif(development, sourceMap.init()))
+    .pipe(preprocessors[syntax])
+    .pipe(mmq())
+    .pipe(
+      gulpif(
+        development,
+        postcss([autoprefixer, require('webp-in-css/plugin')]),
+        postcss([autoprefixer, cssnano])
+      )
+    )
+    .pipe(gulpif(development, sourceMap.write()))
+    .pipe(gulpif(development, dest(path.css.dev), dest(path.css.public)))
+    .pipe(gulpif(development, browser.stream()));
+}
 
-gulp.task('sass', function () {
-    return gulp.src(paths.css)
-        .pipe(sourcemaps.init())
-        // .pipe(shorthand())
-        .pipe(sass().on('error', sass.logError))
-        .pipe(mmq())
-        .pipe(minifyCss())
-        .pipe(autoprefixer({
-            cascade: false
-        }))        .pipe(sourcemaps.write())
-        .pipe(gulp.dest('dist/css'))
-        .pipe(reload({stream:true}));
-});
+//  OPTIMIZE IMAGE TASK
 
-gulp.task('js', function () {
-    return gulp.src(paths.js)
-        .pipe(sourcemaps.init())
-        //.pipe(obfuscate())
-        .pipe(babel({
-            presets: ['@babel/env']
-        }))
-        .pipe(terser())
-        .pipe(sourcemaps.write())
-        .pipe(gulp.dest('dist/js'))
-        .pipe(reload({stream:true}));
-});
+function optimizeImages() {
+  return src(path.images.src)
+    .pipe(gulpif(!development, image()))
+    .pipe(gulpif(development, dest(path.images.dev), dest(path.images.public)))
+    .pipe(src(path.images.src))
+    .pipe(webp())
+    .pipe(
+      gulpif(
+        development,
+        dest(path.images.dev),
+        dest(path.images.public)
+      )
+    );
+}
 
-gulp.task('html',function(){
-    return gulp.src(paths.html)
-        .pipe(gulp.dest('dist'))
-        .pipe(reload({stream:true}));
-});
+//  FONT TASK
 
-gulp.task('images',function(){
-    return gulp.src(paths.images)
-        .pipe(image({
-            pngquant: true,
-            optipng: false,
-            zopflipng: true,
-            jpegRecompress: false,
-            mozjpeg: true,
-            guetzli: false,
-            gifsicle: true,
-            svgo: true,
-            concurrent: 10,
-            quiet: true // defaults to false
-        }))
-        .pipe(gulp.dest('dist/images'))
-        .pipe(reload({stream:true}));
-});
+function font() {
+  return src(path.fonts.src).pipe(
+    gulpif(development, dest(path.fonts.dev), dest(path.fonts.public))
+  );
+}
 
-gulp.task('browserSync', function() {
-    browserSync({
-        server: {
-            baseDir: "./dist"
-        },
-        port: 8080,
-        open: true,
-        notify: false
-    });
+//  HTML MINIFICATION TASK
 
-});
+function htmlMin() {
+  return src(path.html.src)
+    .pipe(gulpif(!development, html({ collapseWhitespace: true })))
+    .pipe(gulpif(development, dest(path.html.dev), dest(path.html.public)));
+}
 
-gulp.task('watcher',function(){
-    gulp.watch(paths.css, gulp.series('sass'));
-    gulp.watch(paths.html, gulp.series('html'));
-    gulp.watch(paths.js, gulp.series('js'));
-    gulp.watch(paths.images, gulp.series('images'));
-});
+//  CLEAN DIRECTORIES
 
-gulp.task('default', gulp.series(gulp.parallel('watcher', 'browserSync')));
+function clean() {
+  return del([
+    directories.dev + directories.icons,
+    directories.dev + directories.images,
+    directories.dev + directories.js,
+    directories.dev + directories.fonts,
+    directories.dev + directories.css
+  ]);
+}
+
+function watchers() {
+  watch(path.css.watcher, CSS);
+  watch(path.html.src, htmlMin);
+  watch(path.js.watcher, JS);
+  watch(path.images.watcher, optimizeImages);
+}
+
+function browserSync() {
+  browser.init({
+    server: directories.dev
+  });
+
+  watch(path.html.src).on('change', browser.reload);
+  watch(path.js.watcher).on('change', browser.reload);
+}
+
+const beforeServer = parallel(htmlMin, JS, CSS, optimizeImages, font);
+const dev = development
+  ? series(beforeServer, parallel(browserSync, watchers))
+  : series(clean, beforeServer);
+
+//  exports['name task for call in cli'] = nameFunctionTask
+
+exports.default = dev;
+
