@@ -33,7 +33,14 @@ nav {
   justify-content: space-between;
 }
 .preloader{
-
+  width: 100px;
+  height: 100px;
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  img{
+    width: 100%;
+  }
 }
 .container__items {
   width: 49%;
@@ -73,6 +80,8 @@ nav {
   img {
     max-width: 400px;
     max-height: 530px;
+    margin-right: 20px;
+    margin-bottom: 20px;
   }
 }
 
@@ -116,7 +125,8 @@ nav {
     }
 
     img {
-      width: 200px;
+      width: 100%;
+      margin-bottom: 10px;
     }
   }
 }

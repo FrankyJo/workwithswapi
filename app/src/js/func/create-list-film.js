@@ -20,15 +20,13 @@ export function createListFilms (data) {
       let descriptionFilm = createElement('p')
       let buttoShowMore = createElement('button')
 
-      buttoShowMore.textContent = 'Show more';
-      buttoShowMore.setAttribute('data-item', item['url'])
-      buttoShowMore.setAttribute('data-id', ++i)
 
-      imageFilm.setAttribute('src', 'https://starwars-visualguide.com/assets/img/films/' + i + '.jpg')
-      titleFilm.textContent = item['title']
-      descriptionFilm.textContent = item['opening_crawl'].substr(0, 50) + '...'
+      imageFilm.setAttribute('src',`https://starwars-visualguide.com/assets/img/films/${item['url'].substr(-2,1)}.jpg`);
+      titleFilm.textContent = item['title'];
+      descriptionFilm.textContent = item['opening_crawl'].substr(0, 50) + '...';
 
-
+      singleFilm.setAttribute('class','list-single-film')
+      singleFilm.setAttribute('data-item', item['url'].substr(-8))
       singleFilm.appendChild(titleFilm)
       singleFilm.appendChild(imageFilm)
       singleFilm.appendChild(descriptionFilm)
@@ -37,16 +35,18 @@ export function createListFilms (data) {
     }
   )
   containerItems.appendChild(listFilm)
+  listFilm.querySelectorAll('.list-single-film').forEach(el => {
 
-  listFilm.addEventListener('click',function (e) {
-    let target = e.target;
-    let singlePerson = connectionAPI(target.getAttribute('data-item'));
-    singlePerson.then(data => createSingleFilm(data, target))
+
+    el.addEventListener('click',function () {
+      let singlePerson = connectionAPI(el.getAttribute('data-item'));
+      singlePerson.then(data => createSingleFilm(data, el))
+    })
   })
 }
 
 //Вывод инфы об одном фильме
-function createSingleFilm(data, target) {
+function createSingleFilm(data, el) {
   const filmArr = data;
   const image = createElement('img')
   const filmInfo = createElement('ul')
@@ -54,16 +54,16 @@ function createSingleFilm(data, target) {
 
   filmInfo.setAttribute('class', 'film__info-container');
   characters.setAttribute('class', 'characters');
-  image.setAttribute('src', 'https://starwars-visualguide.com/assets/img/films/' + target.getAttribute('data-id') + '.jpg')
+  image.setAttribute('src', `https://starwars-visualguide.com/assets/img/films/${el.getAttribute('data-item').substr(-2,1)}.jpg`)
 
   let index = 1;
 
 
+  filmInfo.appendChild(image);
   for (let key in filmArr) {
     if (index <= 6) {
       const SingleFilmAttr = createElement('li')
       SingleFilmAttr.textContent = key + ' | ' + filmArr[key];
-
       filmInfo.appendChild(SingleFilmAttr);
     }
     index++
@@ -71,8 +71,12 @@ function createSingleFilm(data, target) {
 
 
   filmArr['characters'].map(function (el) {
-    let singleCharacter = connectionAPI(el);
+
+    const reg = /(api)\/(.*)/;
+    let urlCharacterArray = reg.exec(el);
+    let singleCharacter = connectionAPI(urlCharacterArray[2]);
     singleCharacter.then(function (data) {
+
 
       let singleCharacter = createElement('li');
       let nameCharacter = createElement('h2');
@@ -81,14 +85,14 @@ function createSingleFilm(data, target) {
       let numCharacter = data['url']
       numCharacter = numCharacter.substring(numCharacter.length - 3, numCharacter.length - 1)
 
-      photoCharacter.setAttribute('src', 'https://starwars-visualguide.com/assets/img/characters/' + numCharacter + '.jpg')
+      photoCharacter.setAttribute('src', `https://starwars-visualguide.com/assets/img/characters/${numCharacter}.jpg`)
       nameCharacter.textContent = data['name']
       singleCharacter.appendChild(photoCharacter)
       singleCharacter.appendChild(nameCharacter)
       characters.appendChild(singleCharacter)
     })
   })
-  if (singleItems.querySelector('.charKacters') != null) {
+  if (singleItems.querySelector('.characters') != null) {
     document.querySelector('.film__info-container').remove();
     document.querySelector('.characters').remove();
     singleItems.appendChild(filmInfo);

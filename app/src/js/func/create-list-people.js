@@ -42,14 +42,14 @@ function createSingleItemsInfo(data,target) {
   let index = 1;
 
   singleItemsInfo.setAttribute('class', 'people__info-container');
-  imgPeople.setAttribute('src', 'https://starwars-visualguide.com/assets/img/characters/' + target.getAttribute('data-id') + '.jpg');
+  imgPeople.setAttribute('src', `https://starwars-visualguide.com/assets/img/characters/${target.getAttribute('data-id')}.jpg`);
   imgPeople.setAttribute('class', 'foto-people');
   for (let key in peopleArr) {
 
     if (index <= 8) {
 
       const singleItemsAttr = createElement('li')
-      singleItemsAttr.textContent = key + ' | ' + peopleArr[key];
+      singleItemsAttr.textContent =`${key}|${peopleArr[key]}`;
 
       singleItemsInfo.appendChild(singleItemsAttr);
     }
